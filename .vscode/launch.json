@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Producer",
+            "type": "cppdbg",
+            "request": "launch",
+            // This path is standard because we set buildDirectory in settings.json
+            "program": "${workspaceFolder}/build/producer",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb", // On Linux, VS Code might auto-switch, but if it fails, remove this line.
+            // Mac-specific setup to ensure permissions
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "linux": {
+                "MIMode": "gdb"
+            }
+        },
+        {
+            "name": "Debug Consumer",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/consumer",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "linux": {
+                "MIMode": "gdb"
+            }
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    // CRITICAL: Tell CMake to use the Conan dependencies
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/build/conan_toolchain.cmake"
+    ],
+    // Formatting settings (optional but good for consistency)
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_fallbackStyle": "Google"
+}

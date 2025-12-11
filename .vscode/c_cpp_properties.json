@@ -1,0 +1,11 @@
+{
+    "configurations": [
+      {
+        "name": "Default",
+        "configurationProvider": "ms-vscode.cmake-tools",
+        "cppStandard": "c++20",
+        "cStandard": "c17"
+      }
+    ],
+    "version": 4
+  }
