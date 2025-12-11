@@ -1,0 +1,10 @@
+# Ignore build directories
+build/
+cmake-build-*/
+
+# Ignore Python/Conan cache garbage
+__pycache__/
+*.pyc
+
+# Ignore OS specific files
+.DS_Store
