@@ -1,10 +1,17 @@
 # Ignore build directories
 build/
 cmake-build-*/
+.cache/
 
 # Ignore Python/Conan cache garbage
 __pycache__/
 *.pyc
 
+# Conan cache (local to each machine)
+.conan/
+
 # Ignore OS specific files
 .DS_Store
+
+# VS Code (optional - uncomment if you want to share VS Code settings)
+# .vscode/

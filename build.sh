@@ -17,6 +17,13 @@ if [ ! -d "$BUILD_DIR" ]; then
     mkdir "$BUILD_DIR"
 fi
 
+# Remove stale CMakeCache.txt if it exists (from previous projects)
+if [ -f "$BUILD_DIR/CMakeCache.txt" ]; then
+    echo "Removing stale CMakeCache.txt..."
+    rm -f "$BUILD_DIR/CMakeCache.txt"
+    rm -rf "$BUILD_DIR/CMakeFiles"
+fi
+
 # 3. Detect OS (Just for logging)
 echo "🔍 Checking System..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -28,19 +35,29 @@ else
 fi
 
 # 4. Install Dependencies (Conan)
-# This looks at your OS and downloads the correct version of fmt
+# Conan handles all dependencies - no system packages needed
+# It automatically detects OS and architecture
 echo "Running Conan..."
-conan install . --build=missing build_type=$BUILD_TYPE
+conan install . --build=missing -s build_type=$BUILD_TYPE
 
 # 5. Configure CMake
-# We use 'Release' for HFT speed (-O3)
+# Conan with cmake_layout generates toolchain in <BuildType>/generators/
+# This works the same on both Mac and Linux
 echo "Configuring CMake..."
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+# Find the toolchain file (should be in Release/generators/ or Debug/generators/)
+TOOLCHAIN_FILE="${BUILD_TYPE}/generators/conan_toolchain.cmake"
+if [ ! -f "$TOOLCHAIN_FILE" ]; then
+    echo "Error: Conan toolchain not found at $TOOLCHAIN_FILE"
+    echo "Make sure Conan installed successfully."
+    exit 1
+fi
+
+cmake .. -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 # 6. Build
 echo "Compiling..."
-cmake --preset conan-release
 cmake --build .
 
 echo "Build Complete! Run:"
