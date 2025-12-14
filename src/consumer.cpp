@@ -39,13 +39,13 @@ int main() {
     sample_count++;
 
     if (tick.id % 100000 == 0) {
-      double ns = cycles / 2.4;
-      double min_ns = min_cycles / 2.4;
+      static double freq_ghz = get_counter_freq_ghz();
+      double ns = cycles / freq_ghz;
+      double min_ns = min_cycles / freq_ghz;
       uint64_t queue_depth = head - tail;
-      fmt::print(
-          "[Consumer] Tick ID: {:>7} | {:>4} cycles ({:>3.0f} ns) | min: {:>3} "
-          "({:>2.0f} ns) | queue: {}\n",
-          tick.id, cycles, ns, min_cycles, min_ns, queue_depth);
+      fmt::print("ID: {:>7} | {:>5} ticks ({:>5.0f} ns) | min: {:>3} ({:>3.0f} "
+                 "ns) | q:{}\n",
+                 tick.id, cycles, ns, min_cycles, min_ns, queue_depth);
       min_cycles = UINT64_MAX;
     }
   }

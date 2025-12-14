@@ -12,7 +12,7 @@
 #include <sched.h>
 #endif
 
-// Simple, fast TSC read - no serialization overhead
+// Simple, fast counter read
 inline uint64_t rdtsc() {
 #if defined(__x86_64__) || defined(_M_X64)
   unsigned int lo, hi;
@@ -24,6 +24,20 @@ inline uint64_t rdtsc() {
   return val;
 #else
   return __builtin_ia32_rdtsc();
+#endif
+}
+
+// Counter frequency in GHz (for converting ticks to nanoseconds)
+inline double get_counter_freq_ghz() {
+#if defined(__aarch64__)
+  // ARM64: Read counter frequency register (typically 24 MHz on Apple Silicon)
+  uint64_t freq;
+  __asm__ __volatile__("mrs %0, cntfrq_el0" : "=r"(freq));
+  return freq / 1e9; // Convert Hz to GHz
+#else
+  // x86: TSC runs at base frequency (~2.4 GHz for most Intel CPUs)
+  // This is approximate - for exact value, query /proc/cpuinfo or use CPUID
+  return 2.4;
 #endif
 }
 
