@@ -2,49 +2,50 @@
 #include <fmt/core.h>
 
 int main() {
-  // 1. Open Existing Shared Memory
-  int shm_fd = shm_open(SHM_NAME, O_RDWR, 0666);
-  if (shm_fd == -1) {
-    fmt::print(stderr, "Error: Run Producer first to create Shared Memory!\n");
+  int fd = shm_open(SHM_NAME, O_RDWR, 0666);
+  if (fd == -1) {
+    fmt::print(stderr, "Run producer first!\n");
     return 1;
   }
 
-  void *ptr = mmap(0, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED,
-                   shm_fd, 0);
-  SharedMemory *shm = (SharedMemory *)ptr;
+  auto *shm = static_cast<SharedMemory *>(mmap(nullptr, sizeof(SharedMemory),
+                                               PROT_READ | PROT_WRITE,
+                                               MAP_SHARED, fd, 0));
 
-  fmt::print("[Consumer] Attached to Feed. Calculating Latency...\n");
+  fmt::print("[Consumer] Started\n");
 
   while (true) {
-    uint64_t current_tail = shm->tail.load(std::memory_order_relaxed);
-    uint64_t current_head = shm->head.load(std::memory_order_acquire);
+    uint64_t tail = shm->tail.load(std::memory_order_relaxed);
+    uint64_t head = shm->head.load(std::memory_order_acquire);
 
-    // Check if buffer is empty
-    if (current_tail == current_head) {
-      cpu_pause(); // Buffer empty, spin wait
+    if (tail >= head) {
+      cpu_pause();
       continue;
     }
 
-    // 2. Read Data
-    const Tick &tick = shm->buffer[current_tail % RING_BUFFER_SIZE];
-
-    // 3. Measure Latency IMMEDIATELY
+    const Tick &tick = shm->buffer[tail % RING_BUFFER_SIZE];
     uint64_t now = rdtsc();
-    uint64_t latency_cycles = now - tick.timestamp;
+    uint64_t cycles = now - tick.timestamp;
 
-    // 4. Mark as Read (Move Tail forward)
-    shm->tail.store(current_tail + 1, std::memory_order_release);
+    shm->tail.store(tail + 1, std::memory_order_release);
 
-    // Logging: Only occasionally
+    // Track min latency (the real IPC latency, not queue wait time)
+    static uint64_t min_cycles = UINT64_MAX;
+    static uint64_t sample_count = 0;
+
+    if (cycles < min_cycles)
+      min_cycles = cycles;
+    sample_count++;
+
     if (tick.id % 100000 == 0) {
-      // Cycle-to-nanosecond conversion is CPU dependent.
-      // On modern 3GHz CPUs, 1 cycle approx 0.33ns
-      double approx_ns = latency_cycles / 3.0;
-
-      fmt::print("Tick ID: {:<8} | Latency: {:<5} cycles (~{:.1f} ns)\n",
-                 tick.id, latency_cycles, approx_ns);
+      double ns = cycles / 2.4;
+      double min_ns = min_cycles / 2.4;
+      uint64_t queue_depth = head - tail;
+      fmt::print(
+          "[Consumer] Tick ID: {:>7} | {:>4} cycles ({:>3.0f} ns) | min: {:>3} "
+          "({:>2.0f} ns) | queue: {}\n",
+          tick.id, cycles, ns, min_cycles, min_ns, queue_depth);
+      min_cycles = UINT64_MAX;
     }
   }
-
-  return 0;
 }
