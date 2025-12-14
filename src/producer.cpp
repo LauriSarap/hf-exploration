@@ -20,7 +20,8 @@ int main() {
   shm->head.store(0);
   shm->tail.store(0);
 
-  fmt::print("[Producer] Started\n");
+  pin_to_core(0); // Pin producer to core 0
+  fmt::print("[Producer] Started (pinned to core 0)\n");
 
   uint32_t id = 0;
   while (true) {

@@ -12,7 +12,8 @@ int main() {
                                                PROT_READ | PROT_WRITE,
                                                MAP_SHARED, fd, 0));
 
-  fmt::print("[Consumer] Started\n");
+  pin_to_core(2); // Pin consumer to core 2 (different physical P-core)
+  fmt::print("[Consumer] Started (pinned to core 2)\n");
 
   while (true) {
     uint64_t tail = shm->tail.load(std::memory_order_relaxed);

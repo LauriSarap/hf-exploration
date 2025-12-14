@@ -7,6 +7,11 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#ifdef __linux__
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 // Simple, fast TSC read - no serialization overhead
 inline uint64_t rdtsc() {
 #if defined(__x86_64__) || defined(_M_X64)
@@ -28,6 +33,16 @@ inline void cpu_pause() {
   __asm__ __volatile__("pause");
 #elif defined(__aarch64__)
   __asm__ __volatile__("yield");
+#endif
+}
+
+// Pin to CPU core (Linux only)
+inline void pin_to_core([[maybe_unused]] int core) {
+#ifdef __linux__
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(core, &cpuset);
+  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 #endif
 }
 
